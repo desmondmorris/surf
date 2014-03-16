@@ -1,0 +1,24 @@
+{
+    "name":"desmondmorris/surf",
+    "description": "An opinionated Drupal workflow",
+    "homepage":"https://github.com/desmondmorris/surf",
+    "license":"MIT",
+    "authors":[
+        {
+            "name":"Desmond Morris"
+        }
+    ],
+    "require":{
+        "php":">=5.3.3",
+        "symfony/Yaml": ">=2.4.2",
+        "vierbergenlars/php-semver": ">=2.1.0"
+    },
+    "require-dev":{
+        "phpunit/phpunit":">=3.5"
+    },
+    "autoload": {
+        "psr-0": {
+            "desmondmorris\\surf\\":"src/"
+        }
+    }
+}
