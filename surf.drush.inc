@@ -11,6 +11,9 @@ use desmondmorris\surf\Site;
 use desmondmorris\surf\Make;
 use desmondmorris\surf\Project;
 
+define('SURF_PATH', dirname(__FILE__));
+define('VENDOR_PATH', SURF_PATH . '/vendor');
+
 /**
  * Implements hook_drush_command().
  */
@@ -26,7 +29,7 @@ function surf_drush_command() {
     ),
     'options' => array(
       'scaffold' => array(
-        'description' => 'Adds a basic project directory structure and files.'
+        'description' => 'Adds a basic project directory structure and files.',
       ),
     ),
   );
@@ -58,7 +61,7 @@ function surf_drush_command() {
     'topics' => array('surf'),
     'examples' => array(
       'drush surf-version' => 'Get current site version.',
-      'drush surf-version --bump=minor' => 'Bumps the minor version of the project'
+      'drush surf-version --bump=minor' => 'Bumps the minor version of the project',
     ),
     'options' => array(
       'bump' => array(
@@ -68,10 +71,19 @@ function surf_drush_command() {
     ),
   );
 
+  $items['surf-sniff'] = array(
+    'description' => 'Run code sniffer against our custom code.',
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'topics' => array('surf'),
+    'examples' => array(
+      'drush surf-sniff' => 'Run code sniffer against our custom code.',
+    )
+  );
+
   $options = array();
-  foreach($items as $command) {
+  foreach ($items as $command) {
     if (isset($command['options'])) {
-      foreach($command['options'] as $key => $option) {
+      foreach ($command['options'] as $key => $option) {
         $options[$key] = $option;
       }
     }
@@ -87,16 +99,14 @@ function surf_drush_command() {
       'drush surf build' => $items['surf-build']['examples']['drush surf-build'],
       'drush surf add' => $items['surf-add']['examples']['drush surf-add'],
       'drush surf version' => $items['surf-version']['examples']['drush surf-version'],
+      'drush surf sniff' => $items['surf-sniff']['examples']['drush surf-sniff'],
     ),
-    'options' => $options
+    'options' => $options,
   );
 
   return $items;
 }
 
-/**
- *
- */
 function drush_surf($command = null) {
 
   $command = $command == null ? 'build' : $command;
@@ -237,7 +247,7 @@ function drush_surf_create() {
 
     exec('mkdir -p ' . implode(' ', $directories));
 
-    foreach($files as $filename => $contents) {
+    foreach ($files as $filename => $contents) {
       exec("echo \"$contents\" > $filename");
     }
 
@@ -245,7 +255,7 @@ function drush_surf_create() {
       'lib/modules' => 'sites/all/modules/custom',
       'lib/themes' => 'sites/all/themes',
       'lib/libraries' => 'sites/all/libraries',
-      'config/settings.php' => 'sites/default/settings.php'
+      'config/settings.php' => 'sites/default/settings.php',
     );
 
   }
@@ -280,5 +290,26 @@ function drush_surf_version() {
     $site->bumpVersion($bump);
   }
   drush_print($site->getVersion());
+
+}
+
+/**
+ *
+ */
+function drush_surf_sniff() {
+
+  $command = array(
+    VENDOR_PATH . '/bin/phpcs',
+    '--standard=' . VENDOR_PATH . '/drupal/coder/coder_sniffer/Drupal',
+    'lib'
+  );
+
+  $command = implode(' ', $command);
+  exec($command, $output);
+
+  if (!empty($output)) {
+    $results = implode("\n", $output);
+    drush_print($results);
+  }
 
 }
