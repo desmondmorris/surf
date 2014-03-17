@@ -24,12 +24,17 @@ define('DOCROOT_NAME', 'docroot');
 function surf_drush_command() {
   $items = array();
 
-  $items['surf-init'] = array(
+  $items['surf-create'] = array(
     'description' => 'Create new project manifest.',
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'topics' => array('surf'),
     'examples' => array(
-      'drush surf-init' => 'Creates new project manifest.',
+      'drush surf-create' => 'Creates new project manifest.',
+    ),
+    'options' => array(
+      'scaffold' => array(
+        'description' => 'Adds a basic project directory structure and files.'
+      ),
     ),
   );
 
@@ -77,7 +82,7 @@ function surf_drush_command() {
 /**
  *
  */
-function drush_surf_init() {
+function drush_surf_create() {
 
   $config = array();
 
@@ -101,15 +106,47 @@ function drush_surf_init() {
     '7.x'
   );
 
-  $yml = Site::configToYaml($config);
+  $scaffold = drush_get_option('scaffold');
 
-  drush_print($yml);
+  if ($scaffold) {
+
+    $directories = array('config', 'lib/modules', 'lib/themes', 'lib/libraries');
+    $files = array(
+      '.gitignore' => 'docroot/',
+      'config/README.md' => 'Keep your configuration files here.',
+      'config/settings.php' => '<?php\n',
+      'lib/README.md' => 'This is where your custom code lives.',
+      'lib/modules/README.md' => 'A home for your custom modules',
+      'lib/themes/README.md' => 'A home for your custom themes',
+      'lib/libraries/README.md' => 'A home for your custom libraries',
+    );
+
+    exec('mkdir -p ' . implode(' ', $directories));
+
+    foreach($files as $filename => $contents) {
+      exec("echo \"$contents\" > $filename");
+    }
+
+    $config['linked'] = array(
+      'lib/modules' => 'sites/all/modules/custom',
+      'lib/themes' => 'sites/all/themes',
+      'lib/libraries' => 'sites/all/libraries',
+      'config/settings.php' => 'sites/default/settings.php'
+    );
+
+  }
+
+  drush_print(Site::configToYaml($config));
 
   $confirm = drush_confirm("Is this correct?");
 
   if ($confirm) {
     Site::saveConfig($config);
+
+    drush_print('Success!  Happy Drupalling');
   }
+
+
 
 }
 
@@ -139,9 +176,7 @@ function drush_surf_build() {
 
   $config = Site::loadConfig();
 
-  $make = "";
-
-  $make .= "api = 2\n";
+  $make = "api = 2\n";
   $make .= "core = {$config['core']}\n";
   $make .= "projects[] = \"drupal\"\n\n";
 
@@ -172,6 +207,20 @@ function drush_surf_build() {
 
   drush_invoke('make', array(BUILD_MANIFEST, DOCROOT_NAME));
   unlink(BUILD_MANIFEST);
+
+  if (isset($config['linked'])) {
+    foreach($config['linked'] as $src => $dest) {
+
+      $src = realpath($src);
+      $dest = realpath(DOCROOT_NAME) . '/' . $dest;
+
+      if(file_exists($dest)) {
+        exec("sudo rm -rf $dest");
+      }
+
+      exec("ln -sfn $src $dest");
+    }
+  }
 
 }
 
