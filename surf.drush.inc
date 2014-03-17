@@ -68,9 +68,130 @@ function surf_drush_command() {
     ),
   );
 
+  $options = array();
+  foreach($items as $command) {
+    if (isset($command['options'])) {
+      foreach($command['options'] as $key => $option) {
+        $options[$key] = $option;
+      }
+    }
+  }
+
+  $items['surf'] = array(
+    'description' => $items['surf-build']['description'],
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'topics' => array('surf'),
+    'examples' => array(
+      'drush surf create' => $items['surf-create']['examples']['drush surf-create'],
+      'drush surf' => $items['surf-build']['examples']['drush surf-build'],
+      'drush surf build' => $items['surf-build']['examples']['drush surf-build'],
+      'drush surf add' => $items['surf-add']['examples']['drush surf-add'],
+      'drush surf version' => $items['surf-version']['examples']['drush surf-version'],
+    ),
+    'options' => $options
+  );
+
   return $items;
 }
 
+/**
+ *
+ */
+function drush_surf($command = null) {
+
+  $command = $command == null ? 'build' : $command;
+  $function = "drush_surf_{$command}";
+
+  if(function_exists($function)) {
+    $args = func_get_args();
+
+    if(!empty($args)){
+      unset($args[0]);
+    }
+    call_user_func_array($function, $args);
+  }
+}
+
+/**
+ *
+ */
+function drush_surf_add() {
+
+  $names = func_get_args();
+
+  if (empty($names)) {
+    return drush_set_error(
+      'DRUSH_SURF_PROJECT_ERROR',
+      'You must pass atleast one project.'
+    );
+  }
+
+  $config = Site::loadConfig();
+
+  if(!isset($config['projects'])){
+    $config['projects'] = array();
+  }
+
+  foreach($names as $name) {
+
+    try {
+      $info = Project::getInfo($name, $config['core']);
+    }
+    catch (Exception $e) {
+      drush_set_error(
+        'DRUSH_SURF_PROJECT_ERROR',
+        $e->getMessage()
+      );
+      continue;
+    }
+
+    $recommended = $info->releases->release[0];
+    $type = str_replace('project_', '', strval($info->type) );
+
+    if (!isset($config['projects'][$type])) {
+      $config['projects'][$type] = array();
+    }
+
+    $project_version = $recommended->version_major . '.' . $recommended->version_patch;
+
+    if (isset($recommended->version_extra)) {
+      $project_version .= "-" . $recommended->version_extra;
+    }
+
+    $config['projects'][$type][$name] = $project_version;
+
+    ksort($config['projects'][$type]);
+  }
+  ksort($config['projects']);
+  Site::saveConfig($config);
+
+}
+
+/**
+ *
+ */
+function drush_surf_build() {
+
+  $site = new Site();
+  $config = $site->getConfig();
+  $make = new Make($site);
+  $make->make();
+
+  if (isset($config['linked'])) {
+    foreach($config['linked'] as $src => $dest) {
+
+      $src = realpath($src);
+      $dest = realpath($config['docroot']) . '/' . $dest;
+
+      if(file_exists($dest)) {
+        exec("sudo rm -rf $dest");
+      }
+
+      exec("ln -sfn $src $dest");
+    }
+  }
+
+}
 
 /**
  *
@@ -141,8 +262,6 @@ function drush_surf_create() {
     drush_print('Success!  Happy Drupalling');
   }
 
-
-
 }
 
 /**
@@ -161,86 +280,5 @@ function drush_surf_version() {
     $site->bumpVersion($bump);
   }
   drush_print($site->getVersion());
-
-}
-
-/**
- *
- */
-function drush_surf_build() {
-
-  $site = new Site();
-  $config = $site->getConfig();
-  $make = new Make($site);
-  $make->make();
-
-  if (isset($config['linked'])) {
-    foreach($config['linked'] as $src => $dest) {
-
-      $src = realpath($src);
-      $dest = realpath($config['docroot']) . '/' . $dest;
-
-      if(file_exists($dest)) {
-        exec("sudo rm -rf $dest");
-      }
-
-      exec("ln -sfn $src $dest");
-    }
-  }
-
-}
-
-/**
- *
- */
-function drush_surf_add() {
-
-  $names = func_get_args();
-
-  if (empty($names)) {
-    return drush_set_error(
-      'DRUSH_SURF_PROJECT_ERROR',
-      'You must pass atleast one project.'
-    );
-  }
-
-  $config = Site::loadConfig();
-
-  if(!isset($config['projects'])){
-    $config['projects'] = array();
-  }
-
-  foreach($names as $name) {
-
-    try {
-      $info = Project::getInfo($name, $config['core']);
-    }
-    catch (Exception $e) {
-      drush_set_error(
-        'DRUSH_SURF_PROJECT_ERROR',
-        $e->getMessage()
-      );
-      continue;
-    }
-
-    $recommended = $info->releases->release[0];
-    $type = str_replace('project_', '', strval($info->type) );
-
-    if (!isset($config['projects'][$type])) {
-      $config['projects'][$type] = array();
-    }
-
-    $project_version = $recommended->version_major . '.' . $recommended->version_patch;
-
-    if (isset($recommended->version_extra)) {
-      $project_version .= "-" . $recommended->version_extra;
-    }
-
-    $config['projects'][$type][$name] = $project_version;
-
-    ksort($config['projects'][$type]);
-  }
-  ksort($config['projects']);
-  Site::saveConfig($config);
 
 }
