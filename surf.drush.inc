@@ -12,6 +12,7 @@ use desmondmorris\surf\Make;
 use desmondmorris\surf\Project;
 
 define('SURF_PATH', dirname(__FILE__));
+define('SURF_SRC_PATH', SURF_PATH . '/src/desmondmorris/surf');
 define('VENDOR_PATH', SURF_PATH . '/vendor');
 
 /**
@@ -258,6 +259,21 @@ function drush_surf_create() {
       'config/settings.php' => 'sites/default/settings.php',
     );
 
+    if (!file_exists('.git')) {
+      $git = drush_confirm("Initialize git?");
+
+      if ($git) {
+        exec('git init');
+
+        $githooks = drush_confirm("Add githooks?");
+
+        if ($githooks) {
+          exec("cp " . SURF_SRC_PATH . "/scripts/pre-commit .git/hooks");
+        }
+
+      }
+    }
+
   }
 
   $config['docroot'] = 'docroot';
@@ -310,6 +326,7 @@ function drush_surf_sniff() {
   if (!empty($output)) {
     $results = implode("\n", $output);
     drush_print($results);
+    return $results;
   }
 
 }

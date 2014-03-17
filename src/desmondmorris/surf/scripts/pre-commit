@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+OUTPUT=$(drush surf sniff)
+
+if [[ ! -z "$OUTPUT" ]]
+  then
+  echo "$OUTPUT" | less
+  exit 1
+fi
+
+exit 0;
