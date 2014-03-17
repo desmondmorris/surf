@@ -5,7 +5,7 @@ namespace desmondmorris\surf;
 class Make {
 
   private $site;
-  private $make;
+  private $raw;
 
   public function __construct(Site $site) {
     $this->setSite($site);
@@ -22,11 +22,11 @@ class Make {
   }
 
   public function setMake($make) {
-    $this->make = $make;
+    $this->raw = $make;
   }
 
   public function getMake() {
-    return $this->make;
+    return $this->raw;
   }
 
   private function _generate() {
