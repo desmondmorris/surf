@@ -9,9 +9,7 @@ require 'vendor/autoload.php';
 
 use desmondmorris\surf\Site;
 use desmondmorris\surf\Make;
-
-// Project
-define('PROJECT_INFO_URL', 'http://updates.drupal.org/release-history');
+use desmondmorris\surf\Project;
 
 /**
  * Implements hook_drush_command().
@@ -213,9 +211,15 @@ function drush_surf_add() {
   }
 
   foreach($names as $name) {
-    $info = _surf_get_project_info($name, $config['core']);
 
-    if ($info === FALSE) {
+    try {
+      $info = Project::getInfo($name, $config['core']);
+    }
+    catch (Exception $e) {
+      drush_set_error(
+        'DRUSH_SURF_PROJECT_ERROR',
+        $e->getMessage()
+      );
       continue;
     }
 
@@ -238,43 +242,5 @@ function drush_surf_add() {
   }
   ksort($config['projects']);
   Site::saveConfig($config);
-
-}
-
-function _surf_get_project_info($name, $version) {
-
-  $url = PROJECT_INFO_URL . "/{$name}/{$version}";
-
-  $xml = file_get_contents($url);
-
-  $object = simplexml_load_string($xml);
-
-  switch($object[0]) {
-    case "No release history was found for the requested project ($name).":
-      drush_set_error(
-        'DRUSH_SURF_PROJECT_ERROR',
-        'Project not found.'
-      );
-      return FALSE;
-      break;
-    case "No release history available for $name $version.":
-      drush_set_error(
-        'DRUSH_SURF_PROJECT_ERROR',
-        'Compatible version not found.'
-      );
-
-      return FALSE;
-      break;
-    case "You must specify an API compatibility version as the final argument to the path.":
-      drush_set_error(
-        'DRUSH_SURF_PROJECT_ERROR',
-        'Please provide a core version in your project.json file.'
-      );
-
-      return FALSE;
-      break;
-  }
-
-  return $object[0];
 
 }
