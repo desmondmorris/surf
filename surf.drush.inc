@@ -8,15 +8,10 @@
 require 'vendor/autoload.php';
 
 use desmondmorris\surf\Site;
+use desmondmorris\surf\Make;
 
 // Project
 define('PROJECT_INFO_URL', 'http://updates.drupal.org/release-history');
-
-// Site - override in config?
-define('BUILD_MANIFEST', sys_get_temp_dir() . "/site.make");
-
-// Site - override in config?
-define('DOCROOT_NAME', 'docroot');
 
 /**
  * Implements hook_drush_command().
@@ -136,6 +131,8 @@ function drush_surf_create() {
 
   }
 
+  $config['docroot'] = 'docroot';
+
   drush_print(Site::configToYaml($config));
 
   $confirm = drush_confirm("Is this correct?");
@@ -174,45 +171,16 @@ function drush_surf_version() {
  */
 function drush_surf_build() {
 
-  $config = Site::loadConfig();
-
-  $make = "api = 2\n";
-  $make .= "core = {$config['core']}\n";
-  $make .= "projects[] = \"drupal\"\n\n";
-
-
-  if (isset($config['projects']) && is_array($config['projects'])) {
-
-    foreach ($config['projects'] as $type => $projects) {
-      if ($type == 'distribution') {
-        $type = 'profile';
-      }
-
-      $make .= "; " . strtoupper($type . 's') . "\n\n";
-
-      foreach($projects as $name => $project) {
-        $make .= "; $name\n";
-        $make .= "projects[$name][type] = $type\n";
-        $make .= "projects[$name][version] = $project\n\n";
-      }
-    }
-
-  }
-
-  file_put_contents(BUILD_MANIFEST, $make);
-
-  if (file_exists(DOCROOT_NAME)) {
-    exec("sudo rm -rf " . DOCROOT_NAME);
-  }
-
-  drush_invoke('make', array(BUILD_MANIFEST, DOCROOT_NAME));
-  unlink(BUILD_MANIFEST);
+  $site = new Site();
+  $config = $site->getConfig();
+  $make = new Make($site);
+  $make->make();
 
   if (isset($config['linked'])) {
     foreach($config['linked'] as $src => $dest) {
 
       $src = realpath($src);
-      $dest = realpath(DOCROOT_NAME) . '/' . $dest;
+      $dest = realpath($config['docroot']) . '/' . $dest;
 
       if(file_exists($dest)) {
         exec("sudo rm -rf $dest");
