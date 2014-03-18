@@ -33,6 +33,11 @@ class Make {
 
     $config = $this->site->getConfig();
 
+    $contrib_dir =
+      isset($config['contrib_dir']) && !empty($config['contrib_dir'])
+      ? $config['contrib_dir']
+      : "contrib";
+
     $make = "api = 2\n";
     $make .= "core = {$config['core']}\n";
     $make .= "projects[] = \"drupal\"\n\n";
@@ -49,7 +54,12 @@ class Make {
         foreach($projects as $name => $project) {
           $make .= "; $name\n";
           $make .= "projects[$name][type] = $type\n";
-          $make .= "projects[$name][version] = $project\n\n";
+          $make .= "projects[$name][version] = $project\n";
+
+          if ($type === 'module') {
+            $make .= "projects[$name][subdir] = $contrib_dir\n";
+          }
+
         }
       }
 
