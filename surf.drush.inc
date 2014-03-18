@@ -185,6 +185,11 @@ function drush_surf_build() {
 
   $site = new Site();
   $config = $site->getConfig();
+
+  if (file_exists('scripts/pre-build.sh')) {
+    echo exec('./scripts/pre-build.sh');
+  }
+
   $make = new Make($site);
   $make->make();
 
@@ -200,6 +205,10 @@ function drush_surf_build() {
 
       exec("ln -sfn $src $dest");
     }
+  }
+
+  if (file_exists('scripts/post-build.sh')) {
+    echo exec('./scripts/post-build.sh');
   }
 
 }
@@ -317,7 +326,8 @@ function drush_surf_sniff() {
   $command = array(
     VENDOR_PATH . '/bin/phpcs',
     '--standard=' . VENDOR_PATH . '/drupal/coder/coder_sniffer/Drupal',
-    'lib'
+    'lib',
+    '--ignore=*.js,*.css'
   );
 
   $command = implode(' ', $command);
