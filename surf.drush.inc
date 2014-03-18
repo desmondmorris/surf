@@ -249,6 +249,7 @@ function drush_surf_create() {
       'lib/modules',
       'lib/themes',
       'lib/libraries',
+      'lib/profiles',
       'scripts',
     );
 
@@ -260,6 +261,7 @@ function drush_surf_create() {
       'lib/modules/README.md' => 'A home for your custom modules',
       'lib/themes/README.md' => 'A home for your custom themes',
       'lib/libraries/README.md' => 'A home for your custom libraries',
+      'lib/profiles/README.md' => 'A home for your custom profiles',
       'scripts/pre-build.sh' => "#!/usr/bin/env bash\n\necho 'Starting build'\n",
       'scripts/post-build.sh' => "#!/usr/bin/env bash\n\necho 'Build complete.'\n",
     );
@@ -277,6 +279,7 @@ function drush_surf_create() {
       'lib/modules' => 'sites/all/modules/custom',
       'lib/themes' => 'sites/all/themes',
       'lib/libraries' => 'sites/all/libraries',
+      'lib/profiles' => 'sites/all/profiles',
       'config/settings.php' => 'sites/default/settings.php',
     );
 
