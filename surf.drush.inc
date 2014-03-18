@@ -244,7 +244,14 @@ function drush_surf_create() {
 
   if ($scaffold) {
 
-    $directories = array('config', 'lib/modules', 'lib/themes', 'lib/libraries');
+    $directories = array(
+      'config',
+      'lib/modules',
+      'lib/themes',
+      'lib/libraries',
+      'scripts',
+    );
+
     $files = array(
       '.gitignore' => 'docroot/',
       'config/README.md' => 'Keep your configuration files here.',
@@ -253,6 +260,8 @@ function drush_surf_create() {
       'lib/modules/README.md' => 'A home for your custom modules',
       'lib/themes/README.md' => 'A home for your custom themes',
       'lib/libraries/README.md' => 'A home for your custom libraries',
+      'scripts/pre-build.sh' => "#!/usr/bin/env bash\n\necho 'Starting build'\n",
+      'scripts/post-build.sh' => "#!/usr/bin/env bash\n\necho 'Build complete.'\n",
     );
 
     exec('mkdir -p ' . implode(' ', $directories));
@@ -260,6 +269,9 @@ function drush_surf_create() {
     foreach ($files as $filename => $contents) {
       exec("echo \"$contents\" > $filename");
     }
+
+    chmod('scripts/post-build.sh', 0755);
+    chmod('scripts/pre-build.sh', 0755);
 
     $config['linked'] = array(
       'lib/modules' => 'sites/all/modules/custom',
