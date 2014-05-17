@@ -1,5 +1,6 @@
 {
     "name":"desmondmorris/surf",
+    "type": "drupal-drush",
     "description": "An opinionated Drupal workflow",
     "homepage":"https://github.com/desmondmorris/surf",
     "license":"MIT",
@@ -9,6 +10,7 @@
         }
     ],
     "require":{
+        "composer/installers": "~1.0",
         "php":">=5.3.3",
         "symfony/Yaml": ">=2.4.2",
         "vierbergenlars/php-semver": ">=2.1.0",
