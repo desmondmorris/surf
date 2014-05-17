@@ -277,9 +277,8 @@ function drush_surf_create() {
 
     $config['linked'] = array(
       'lib/modules' => 'sites/all/modules/custom',
-      'lib/themes' => 'sites/all/themes',
+      'lib/themes' => 'sites/all/themes/custom',
       'lib/libraries' => 'sites/all/libraries',
-      'lib/profiles' => 'sites/all/profiles',
       'config/settings.php' => 'sites/default/settings.php',
     );
 
