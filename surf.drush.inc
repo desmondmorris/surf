@@ -325,7 +325,7 @@ function _drush_surf_create() {
 
   }
 
-  drush_print(Site::configToYaml($config));
+  drush_print(json_encode($config, JSON_PRETTY_PRINT));
 
   $confirm = drush_confirm("Is this correct?");
 
@@ -360,11 +360,20 @@ function _drush_surf_version() {
  *
  */
 function _drush_surf_sniff() {
+  $site = new Site();
+  $config = $site->getConfig();
+
+  if (empty($config->directories)) {
+    drush_print('You have not set up any directories in your config file');
+    return;
+  }
+
+  $directories = implode(" ", (array) $config->directories);
 
   $command = array(
     VENDOR_PATH . '/bin/phpcs',
     '--standard=' . VENDOR_PATH . '/drupal/coder/coder_sniffer/Drupal',
-    'lib',
+    $directories,
     '--ignore=*.js,*.css'
   );
 
