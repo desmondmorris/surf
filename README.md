@@ -12,6 +12,12 @@ Surf is an experimental package management system for Drupal projects built on t
 
 ### Installation
 
+*Quick Install*
+
+````
+curl -s http://surf.drupal.build/install.sh | sudo sh
+````
+
 ### Features
 
 ## Bugs and feature requests
