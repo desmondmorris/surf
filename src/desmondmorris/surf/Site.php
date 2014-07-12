@@ -7,7 +7,7 @@ use vierbergenlars\SemVer\version;
 
 class Site {
 
-  const MANIFEST_FILE = 'site.yml';
+  const MANIFEST_FILE = 'site.json';
 
   private $config;
 
@@ -21,19 +21,15 @@ class Site {
   }
 
   public static function loadConfig($manifest = self::MANIFEST_FILE) {
-    $yaml = file_get_contents($manifest);
-    return Yaml::parse($yaml);
+    $json = file_get_contents($manifest);
+    return json_decode($json);
   }
 
   public static function saveConfig($config, $manifest = self::MANIFEST_FILE) {
-    $yaml = self::configToYaml($config);
-    file_put_contents($manifest, $yaml);
+    $json = json_encode($config, JSON_PRETTY_PRINT);
+    file_put_contents($manifest, $json);
 
     return $config;
-  }
-
-  public static function configToYaml($config) {
-    return Yaml::dump($config, 20, 4, FALSE, TRUE);
   }
 
   public function setConfig($config) {
@@ -59,8 +55,8 @@ class Site {
       throw new Exception('Invalid version bump type');
     }
 
-    $version = new version($config['version']);
-    $config['version'] = (string) $version->inc($type);
+    $version = new version($config->version);
+    $config->version = (string) $version->inc($type);
 
     $saved = self::saveConfig($config);
 
@@ -69,9 +65,9 @@ class Site {
   }
 
   public function getVersion() {
-    if (!isset($this->config['version'])) {
+    if (!isset($this->config->version)) {
       throw new Exception('No version found in config');
     }
-    return $this->config['version'];
+    return $this->config->version;
   }
 }
