@@ -7,7 +7,7 @@ use vierbergenlars\SemVer\version;
 
 class Site {
 
-  const MANIFEST_FILE = 'site.json';
+  const MANIFEST_FILE = 'surf.json';
 
   private $config;
 
