@@ -12,7 +12,9 @@ build:
           code: |
             echo "php version $(php --version) running"
             echo "from location $(which php)"
-      # Add more steps here:
-      #- script:
-      #    name: run unit tests
-      #    code: phpunit
+deploy:
+  steps:
+    - lukevivier/gh-pages@0.2.1:
+        token: $GH_PAGES_TOKEN
+        domain: surf.drupal.build
+        basedir: docs
