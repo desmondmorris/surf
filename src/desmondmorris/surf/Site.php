@@ -2,7 +2,6 @@
 
 namespace desmondmorris\surf;
 
-use Symfony\Component\Yaml\Yaml;
 use vierbergenlars\SemVer\version;
 
 class Site {
@@ -22,7 +21,7 @@ class Site {
 
   public static function loadConfig($manifest = self::MANIFEST_FILE) {
     $json = file_get_contents($manifest);
-    return json_decode($json);
+    return json_decode($json, TRUE);
   }
 
   public static function saveConfig($config, $manifest = self::MANIFEST_FILE) {
@@ -55,8 +54,8 @@ class Site {
       throw new Exception('Invalid version bump type');
     }
 
-    $version = new version($config->version);
-    $config->version = (string) $version->inc($type);
+    $version = new version($config['version']);
+    $config['version'] = (string) $version->inc($type);
 
     $saved = self::saveConfig($config);
 
@@ -65,9 +64,9 @@ class Site {
   }
 
   public function getVersion() {
-    if (!isset($this->config->version)) {
+    if (!isset($this->config['version'])) {
       throw new Exception('No version found in config');
     }
-    return $this->config->version;
+    return $this->config['version'];
   }
 }

@@ -60,13 +60,13 @@ class Make {
     # Build a drupal-org-core.make file if it doesn't exist.
 
     $drupal_org_core_make_raw = "api = 2
-    core = " . $config->core .  "
+    core = " . $config['core'] .  "
     ";
 
 
-    if (isset($config->projects->core)) {
-      if (count($config->projects->core) == 1) {
-        foreach($config->projects->core as $core_project_name => $core_project_version) {
+    if (isset($config['projects']['core'])) {
+      if (count($config['projects']['core']) == 1) {
+        foreach($config['projects']['core'] as $core_project_name => $core_project_version) {
 
           if (!is_array($core_project_version)) {
             $drupal_org_core_make_raw .= "projects[" . $core_project_name . "] = " . $core_project_version;
@@ -99,8 +99,8 @@ class Make {
       )
     ));
 
-    if (isset($config->type) && $config->type == 'profile') {
-      $profile_dir = $tmp_dir . "/core/profiles/" . $config->name;
+    if (isset($config['type']) && $config['type'] == 'profile') {
+      $profile_dir = $tmp_dir . "/core/profiles/" . $config['name'];
       mkdir($profile_dir);
       shell_exec("cp -rf $tmp_dir/projects/* $profile_dir");
       shell_exec("find $cwd -mindepth 1 -maxdepth 1 -name '.build' -or -exec cp -r {} $profile_dir \;");
@@ -110,8 +110,8 @@ class Make {
       shell_exec("cp -rf $tmp_dir/projects/* $tmp_dir/core/sites/all");
     }
 
-    $docroot = $config->docroot;
-    
+    $docroot = $config['docroot'];
+
     if (file_exists($docroot)) {
       exec("rm -rf $docroot");
     }
@@ -125,12 +125,12 @@ class Make {
     $config = $this->site->getConfig();
 
     $contrib_dir =
-      isset($config->contrib_dir) && !empty($config->contrib_dir)
-      ? $config->contrib_dir
+      isset($config['contrib_dir']) && !empty($config['contrib_dir'])
+      ? $config['contrib_dir']
       : "contrib";
 
     $make = "api = 2\n";
-    $make .= "core = {$config->core}\n";
+    $make .= "core = {$config['core']}\n";
     $make .= "projects[] = \"drupal\"\n\n";
 
     $types = array('projects');
@@ -141,9 +141,9 @@ class Make {
 
     foreach($types as $project_type) {
 
-      if (isset($config->$project_type) && !empty($config->$project_type)) {
+      if (isset($config[$project_type]) && !empty($config[$project_type])) {
 
-        foreach ($config->$project_type as $type => $projects) {
+        foreach ($config[$project_type] as $type => $projects) {
 
           if ($type == 'core') {
             continue;
@@ -177,7 +177,7 @@ class Make {
   public function make() {
 
     $config = $this->site->getConfig();
-    $docroot = $config->docroot;
+    $docroot = $config['docroot'];
     $manifest = sys_get_temp_dir() . "/site.make";
     $make = $this->getMake();
 

@@ -21,9 +21,17 @@ define('VENDOR_PATH', SURF_PATH . '/vendor');
 function surf_drush_command() {
   $items = array();
 
+  $items['surf'] = array(
+    'description' => 'Surf README',
+    'hidden' => TRUE,
+    'topic' => TRUE,
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'callback' => 'drush_print_file',
+    'callback arguments' => array(dirname(__FILE__) . '/README.md'),
+  );
+
   $items['surf-create'] = array(
     'description' => 'Create new project manifest.',
-    'callback' => '_drush_surf_create',
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'topics' => array('surf'),
     'examples' => array(
@@ -38,7 +46,6 @@ function surf_drush_command() {
 
   $items['surf-projects'] = array(
     'description' => 'List projects.',
-    'callback' => '_drush_surf_projects',
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'topics' => array('surf'),
     'examples' => array(
@@ -54,7 +61,6 @@ function surf_drush_command() {
 
   $items['surf-build'] = array(
     'description' => 'Build site from project config.',
-    'callback' => '_drush_surf_build',
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'topics' => array('surf'),
     'examples' => array(
@@ -67,7 +73,6 @@ function surf_drush_command() {
 
   $items['surf-add'] = array(
     'description' => 'Add project dependencies.',
-    'callback' => '_drush_surf_add',
     'arguments' => array(
       'name' => 'Project name',
     ),
@@ -84,7 +89,7 @@ function surf_drush_command() {
 
   $items['surf-version'] = array(
     'description' => 'Get current site version or bump current version.',
-    'callback' => '_drush_surf_version',
+    'command hook' => '_drush_surf_version',
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'topics' => array('surf'),
     'examples' => array(
@@ -101,7 +106,6 @@ function surf_drush_command() {
 
   $items['surf-sniff'] = array(
     'description' => 'Run code sniffer against our custom code.',
-    'callback' => '_drush_surf_sniff',
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'topics' => array('surf'),
     'examples' => array(
@@ -115,7 +119,7 @@ function surf_drush_command() {
 /**
  *
  */
-function _drush_surf_projects() {
+function drush_surf_projects() {
   $config = Site::loadConfig();
 
   $no_dev = drush_get_option('no-dev');
@@ -128,8 +132,8 @@ function _drush_surf_projects() {
       break;
     }
 
-    if (isset($config->$project_type)) {
-      foreach($config->$project_type as $type => $projects) {
+    if (isset($config[$project_type])) {
+      foreach($config[$project_type] as $type => $projects) {
 
         $group = $type . 's';
 
@@ -153,7 +157,7 @@ function _drush_surf_projects() {
 /**
  *
  */
-function _drush_surf_add() {
+function drush_surf_add() {
 
   $names = func_get_args();
 
@@ -167,13 +171,13 @@ function _drush_surf_add() {
   $config = Site::loadConfig();
 
   $project_type = 'projects';
-  if(!isset($config->projects)){
+  if(!isset($config['projects'])){
     $config['projects'] = array();
   }
 
   if (drush_get_option('dev')) {
     $project_type = 'devProjects';
-    if(!isset($config->devProjects)){
+    if(!isset($config['devProjects'])){
       $config['devProjects'] = array();
     }
   }
@@ -186,7 +190,7 @@ function _drush_surf_add() {
     $project_version = isset($matches[3]) ? $matches[3] : null;
     $name = $matches[1];
     try {
-      $info = Project::getInfo($name, $config->core);
+      $info = Project::getInfo($name, $config['core']);
     }
     catch (Exception $e) {
       drush_set_error(
@@ -201,7 +205,7 @@ function _drush_surf_add() {
     if (!$project_version) {
       $recommended = $info->releases->release[0];
 
-      if (!isset($config->$project_type->$type)) {
+      if (!isset($config[$project_type][$type])) {
         $config[$project_type][$type] = array();
       }
 
@@ -214,19 +218,16 @@ function _drush_surf_add() {
 
     drush_print('Adding '  . $info->title . ' (' . $name . '-' . $project_version . ')');
 
-    $config->$project_type->$type->$name = $project_version;
+    $config[$project_type][$type][$name] = $project_version;
 
-    //ksort($config->$project_type->$type);
+    ksort($config[$project_type][$type]);
   }
-  //ksort($config->$project_type);
+  ksort($config[$project_type]);
   Site::saveConfig($config);
 
 }
 
-function _drush_surf_build() {
-
-  $site = new Site();
-  $config = $site->getConfig();
+function drush_surf_build() {
 
   if (drush_get_option('dev')) {
     $options['dev'] = TRUE;
@@ -240,7 +241,7 @@ function _drush_surf_build() {
 /**
  *
  */
-function _drush_surf_create() {
+function drush_surf_create() {
 
   $config = array();
 
@@ -340,7 +341,7 @@ function _drush_surf_create() {
 /**
  *
  */
-function _drush_surf_version() {
+function drush_surf_version() {
 
   $site = new Site();
 
@@ -359,16 +360,16 @@ function _drush_surf_version() {
 /**
  *
  */
-function _drush_surf_sniff() {
+function drush_surf_sniff() {
   $site = new Site();
   $config = $site->getConfig();
 
-  if (empty($config->directories)) {
+  if (empty($config['directories'])) {
     drush_print('You have not set up any directories in your config file');
     return;
   }
 
-  $directories = implode(" ", (array) $config->directories);
+  $directories = implode(" ", (array) $config['directories']);
 
   $command = array(
     VENDOR_PATH . '/bin/phpcs',
