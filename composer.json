@@ -1,8 +1,10 @@
 {
     "name":"desmondmorris/surf",
     "type": "drupal-drush",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "description": "An opinionated Drupal workflow",
-    "homepage":"https://github.com/desmondmorris/surf",
+    "homepage":"https://surf.drupal.build",
     "license":"MIT",
     "authors":[
         {
