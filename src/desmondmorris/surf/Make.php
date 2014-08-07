@@ -59,32 +59,22 @@ class Make {
     $drupal_org_core_make = $tmp_dir . '/drupal-org-core.make';
     # Build a drupal-org-core.make file if it doesn't exist.
 
-    $drupal_org_core_make_raw = "api = 2
-    core = " . $config['core'] .  "
-    ";
+    $drupal_org_core_make_raw = "api = 2\ncore = " . $config['core'] .  "\n";
 
 
     if (isset($config['projects']['core'])) {
-      if (count($config['projects']['core']) == 1) {
-        foreach($config['projects']['core'] as $core_project_name => $core_project_version) {
-
-          if (!is_array($core_project_version)) {
-            $drupal_org_core_make_raw .= "projects[" . $core_project_name . "] = " . $core_project_version;
-          }
-          else {
-
-            // _drush_make_generate_makefile_body(array($core_project_name => $core_project_version));
-            // //$str = $this->_arrayToInfo(array($core_project_name => $core_project_version));
-            //
-            // //print_r($str);
-            // exit;
+      $core_base = "projects[drupal]";
+      $drupal_org_core_make_raw .= $core_base . "[type] = core\n";
+      foreach($config['projects']['core'] as $setting => $value) {
+        if ($setting == 'download') {
+          foreach ($value as $download_setting => $download_setting_value) {
+            $drupal_org_core_make_raw .= $core_base . "[download][" . $download_setting . "] = " . $download_setting_value . "\n";
           }
         }
       }
-      else {
-
-
-      }
+    }
+    else {
+      $drupal_org_core_make_raw .= 'projects[] = drupal';
     }
 
     file_put_contents($drupal_org_core_make, $drupal_org_core_make_raw);
@@ -131,7 +121,7 @@ class Make {
 
     $make = "api = 2\n";
     $make .= "core = {$config['core']}\n";
-    $make .= "projects[] = \"drupal\"\n\n";
+    //$make .= "projects[] = \"drupal\"\n\n";
 
     $types = array('projects');
 

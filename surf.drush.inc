@@ -9,7 +9,6 @@ require 'vendor/autoload.php';
 
 use desmondmorris\surf\Site;
 use desmondmorris\surf\Make;
-use desmondmorris\surf\Project;
 
 define('SURF_PATH', dirname(__FILE__));
 define('SURF_SRC_PATH', SURF_PATH . '/src/desmondmorris/surf');
@@ -26,32 +25,49 @@ function surf_drush_command() {
     'hidden' => TRUE,
     'topic' => TRUE,
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'aliases' => array('s'),
     'callback' => 'drush_print_file',
     'callback arguments' => array(dirname(__FILE__) . '/README.md'),
   );
 
-  $items['surf-create'] = array(
-    'description' => 'Create new project manifest.',
+  $items['surf-init'] = array(
+    'description' => 'Create a new surf project',
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'topics' => array('surf'),
     'examples' => array(
-      'drush surf-create' => 'Creates new project manifest.',
-    ),
-    'options' => array(
-      'scaffold' => array(
-        'description' => 'Adds a basic project directory structure and files.',
-      ),
-    ),
+      'drush surf-init' => 'Creates new surf project.',
+    )
   );
 
-  $items['surf-projects'] = array(
+
+  $items['surf-link'] = array(
+    'description' => 'Link custom projects and directories',
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'command hook' => '_drush_surf_copy',
+    'topics' => array('surf'),
+    'examples' => array(
+      'drush surf-link' => 'Link custom projects and directories',
+    )
+  );
+
+  $items['surf-commands'] = array(
+    'description' => 'Installs drush commands.',
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'topics' => array('surf'),
+    'examples' => array(
+      'drush surf-commands' => 'Installs drush commands.',
+    )
+  );
+
+  $items['surf-pm-list'] = array(
     'description' => 'List projects.',
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'topics' => array('surf'),
     'examples' => array(
-      'drush surf-projects' => 'Lists all projects.',
-      'drush surf-projects --no-dev' => 'Exclude dev projects.',
+      'drush surf-pm-list' => 'Lists all projects.',
+      'drush surf-pm-list --no-dev' => 'Exclude dev projects.',
     ),
+    'aliases' => array('spml'),
     'options' => array(
       'no-dev' => array(
         'descriptions' => 'Lists all projects except dev.'
@@ -71,7 +87,7 @@ function surf_drush_command() {
     ),
   );
 
-  $items['surf-add'] = array(
+  $items['surf-pm-add'] = array(
     'description' => 'Add project dependencies.',
     'arguments' => array(
       'name' => 'Project name',
@@ -79,9 +95,10 @@ function surf_drush_command() {
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'topics' => array('surf'),
     'examples' => array(
-      'drush surf-add views' => 'Add views.',
-      'drush surf-add views@1.0' => 'Add views 1.0.',
+      'drush surf-pm-add views' => 'Add views.',
+      'drush surf-pm-add views@1.0' => 'Add views 1.0.',
     ),
+    'aliases' => array('spma'),
     'options' => array(
       'dev' => 'Development only projects'
     ),
@@ -119,112 +136,19 @@ function surf_drush_command() {
 /**
  *
  */
-function drush_surf_projects() {
-  $config = Site::loadConfig();
-
-  $no_dev = drush_get_option('no-dev');
-
-  $project_types = array('projects', 'devProjects');
-
-  foreach($project_types as $project_type) {
-
-    if (($project_type == 'devProjects') && ($no_dev)) {
-      break;
-    }
-
-    if (isset($config[$project_type])) {
-      foreach($config[$project_type] as $type => $projects) {
-
-        $group = $type . 's';
-
-        if ($project_type == 'devProjects') {
-          $group = 'Development ' . $group;
-        }
-
-        drush_print(ucwords($group) . ':');
-        foreach($projects as $name => $version) {
-          drush_print($name . '-' . $version);
-        }
-        drush_print();
-      }
-    }
-
-  }
-
+function drush_surf_pm_list() {
+  require_once(SURF_SRC_PATH . '/commands/pm.inc');
+  _surf_pm_list();
 }
 
 
 /**
  *
  */
-function drush_surf_add() {
-
+function drush_surf_pm_add() {
+  require_once(SURF_SRC_PATH . '/commands/pm.inc');
   $names = func_get_args();
-
-  if (empty($names)) {
-    return drush_set_error(
-      'DRUSH_SURF_PROJECT_ERROR',
-      'You must pass atleast one project.'
-    );
-  }
-
-  $config = Site::loadConfig();
-
-  $project_type = 'projects';
-  if(!isset($config['projects'])){
-    $config['projects'] = array();
-  }
-
-  if (drush_get_option('dev')) {
-    $project_type = 'devProjects';
-    if(!isset($config['devProjects'])){
-      $config['devProjects'] = array();
-    }
-  }
-
-  foreach($names as $name) {
-
-
-    preg_match("/([a-z_-]*)(@(.*))?$/", $name, $matches);
-
-    $project_version = isset($matches[3]) ? $matches[3] : null;
-    $name = $matches[1];
-    try {
-      $info = Project::getInfo($name, $config['core']);
-    }
-    catch (Exception $e) {
-      drush_set_error(
-        'DRUSH_SURF_PROJECT_ERROR',
-        $e->getMessage()
-      );
-      continue;
-    }
-
-    $type = str_replace('project_', '', strval($info->type) );
-
-    if (!$project_version) {
-      $recommended = $info->releases->release[0];
-
-      if (!isset($config[$project_type][$type])) {
-        $config[$project_type][$type] = array();
-      }
-
-      $project_version = $recommended->version_major . '.' . $recommended->version_patch;
-
-      if (isset($recommended->version_extra)) {
-        $project_version .= "-" . $recommended->version_extra;
-      }
-    }
-
-    drush_print('Adding '  . $info->title . ' (' . $name . '-' . $project_version . ')');
-
-    $config[$project_type][$type][$name] = $project_version;
-
-    ksort($config[$project_type][$type]);
-  }
-  ksort($config[$project_type]);
-  Site::saveConfig($config);
-
+  _surf_pm_add($names);
 }
 
 function drush_surf_build() {
@@ -233,7 +157,7 @@ function drush_surf_build() {
     $options['dev'] = TRUE;
   }
 
-  $make = new Make($site, $options);
+  $make = new Make(new Site(), $options);
   $make->build();
 
 }
@@ -241,18 +165,30 @@ function drush_surf_build() {
 /**
  *
  */
-function drush_surf_create() {
+function drush_surf_init() {
+
+  require_once(SURF_SRC_PATH . '/commands/project.inc');
 
   $config = array();
 
   $config['name'] = drush_prompt(
-    'Name',
+    'Machine-name',
     basename(getcwd())
+  );
+
+  $config['title'] = drush_prompt(
+    'Title',
+    'My Drupal Project'
   );
 
   $config['description'] = drush_prompt(
     'Description',
     'My cool new Drupal project'
+  );
+
+  $config['type'] = drush_prompt(
+    'Project type (website, profile)',
+    'website'
   );
 
   $config['version'] = drush_prompt(
@@ -267,74 +203,35 @@ function drush_surf_create() {
 
   $config['docroot'] = 'drupal';
 
-  $scaffold = drush_get_option('scaffold');
-
-  if ($scaffold) {
-
-    $directories = array(
-      'config',
-      'lib/modules',
-      'lib/themes',
-      'lib/libraries',
-      'lib/profiles',
-      'scripts',
-    );
-
-    $files = array(
-      '.gitignore' => $config['docroot']  . '/',
-      'config/README.md' => 'Keep your configuration files here.',
-      'config/settings.php' => '<?php\n',
-      'lib/README.md' => 'This is where your custom code lives.',
-      'lib/modules/README.md' => 'A home for your custom modules',
-      'lib/themes/README.md' => 'A home for your custom themes',
-      'lib/libraries/README.md' => 'A home for your custom libraries',
-      'lib/profiles/README.md' => 'A home for your custom profiles',
-      'scripts/pre-build.sh' => "#!/usr/bin/env bash\n\necho 'Starting build'\n",
-      'scripts/post-build.sh' => "#!/usr/bin/env bash\n\necho 'Build complete.'\n",
-    );
-
-    exec('mkdir -p ' . implode(' ', $directories));
-
-    foreach ($files as $filename => $contents) {
-      exec("echo \"$contents\" > $filename");
-    }
-
-    chmod('scripts/post-build.sh', 0755);
-    chmod('scripts/pre-build.sh', 0755);
-
-    $config['linked'] = array(
-      'lib/modules' => 'sites/all/modules/custom',
-      'lib/themes' => 'sites/all/themes/custom ',
-      'lib/libraries' => 'sites/all/libraries',
-      'config/settings.php' => 'sites/default/settings.php',
-    );
-
-    if (!file_exists('.git')) {
-      $git = drush_confirm("Initialize git?");
-
-      if ($git) {
-        exec('git init');
-
-        $githooks = drush_confirm("Add githooks?");
-
-        if ($githooks) {
-          exec("cp " . SURF_SRC_PATH . "/scripts/pre-commit .git/hooks");
-        }
-
-      }
-    }
-
-  }
-
   drush_print(json_encode($config, JSON_PRETTY_PRINT));
 
   $confirm = drush_confirm("Is this correct?");
 
-  if ($confirm) {
-    Site::saveConfig($config);
-
-    drush_print('Success!  Happy Drupalling');
+  if (!$confirm) {
+    return;
   }
+
+  _surf_init($config);
+
+  if (!file_exists('.git')) {
+    $git = drush_confirm("Initialize git?");
+
+    if ($git) {
+      exec('git init');
+
+      // $githooks = drush_confirm("Add githooks?");
+      //
+      // if ($githooks) {
+      //   exec("cp " . SURF_SRC_PATH . "/scripts/pre-commit .git/hooks");
+      // }
+
+    }
+  }
+
+  // Install vendor drush commands
+  drush_surf_commands();
+
+  drush_print('Success!  Happy Drupalling');
 
 }
 
@@ -388,3 +285,87 @@ function drush_surf_sniff() {
   }
 
 }
+
+function drush_surf_commands() {
+  $site = new Site();
+  $config = $site->getConfig();
+  $cwd = getcwd();
+
+  if (!isset($config['commands'])) {
+    return;
+  }
+
+  foreach ($config['commands'] as $command => $url) {
+
+    $vendor_path = "vendor/drush-commands/" . $command;
+    rrmdir($vendor_path);
+    exec("git clone " . $url . " " . $vendor_path);
+
+    if (file_exists("./" . $vendor_path . "/composer.json")) {
+      exec("cd " . $vendor_path . " && composer update --no-dev && cd " . $cwd);
+    }
+
+  }
+
+}
+
+function drush_surf_link($copy = FALSE) {
+  $site = new Site();
+  $config = $site->getConfig();
+  $cwd = getcwd();
+
+  $docroot = isset($config['docroot']) ? $config['docroot'] : 'docroot';
+
+  if (!file_exists($cwd . "/" . $docroot)) {
+    return drush_set_error(
+      'DRUSH_SURF_PROJECT_ERROR',
+      'Docroot not found.'
+    );
+  }
+
+  $directories = isset($config['directories']) ? $config['directories'] : array();
+  $linked = isset($config['linked']) ? $config['linked'] : array();
+
+
+
+  foreach($linked as $src => $dest) {
+
+    if (isset($directories[$src])) {
+      $src_path = $cwd . "/" . $directories[$src];
+      $dest_path = $cwd . "/" . $docroot . "/" . $dest;
+
+      if (file_exists($dest_path)) {
+        if (is_dir($dest_path) && !is_link($dest_path)) {
+          rrmdir($dest_path);
+        }
+        else {
+          unlink($dest_path);
+        }
+      }
+
+      if ($copy === TRUE) {
+        drush_print("Copying " . $src);
+        copy($src_path, $dest_path);
+      }
+      else {
+        drush_print("Linking " . $src);
+        symlink($src_path, $dest_path);
+      }
+    }
+
+  }
+
+}
+
+function rrmdir($dir) {
+   if (is_dir($dir)) {
+     $objects = scandir($dir);
+     foreach ($objects as $object) {
+       if ($object != "." && $object != "..") {
+         if (filetype($dir."/".$object) == "dir") rrmdir($dir."/".$object); else unlink($dir."/".$object);
+       }
+     }
+     reset($objects);
+     rmdir($dir);
+   }
+ }
