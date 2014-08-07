@@ -17,7 +17,8 @@ if (file_exists(\$project_root . '/surf.json')) {
   \$options['include'][] = \$project_root . '/vendor/drush-commands';
   \$options['alias-path'][] = \$project_root . '/config/aliases';
 }
-EOF);
+EOF
+);
 
 if [ ! -f ~/.drushrc.php ]; then
   echo "Creating a drush rc file";
