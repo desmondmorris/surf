@@ -104,15 +104,16 @@ function surf_drush_command() {
     ),
   );
 
-  $items['surf-version'] = array(
+  $items['surf-project-version'] = array(
     'description' => 'Get current site version or bump current version.',
-    'command hook' => '_drush_surf_version',
+    'command hook' => '_drush_surf_get_version',
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'topics' => array('surf'),
     'examples' => array(
-      'drush surf-version' => 'Get current site version.',
-      'drush surf-version --bump=minor' => 'Bumps the minor version of the project',
+      'drush surf-project-version' => 'Get current site version.',
+      'drush surf-project-version --bump=minor' => 'Bumps the minor version of the project',
     ),
+    'aliases' => array('surf-version'),
     'options' => array(
       'bump' => array(
         'description' => 'Optional: This will bump the version number',
@@ -238,7 +239,7 @@ function drush_surf_init() {
 /**
  *
  */
-function drush_surf_version() {
+function drush_surf_project_version() {
 
   $site = new Site();
 
