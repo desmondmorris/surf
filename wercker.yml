@@ -8,10 +8,10 @@ build:
           name: install dependencies
           code: composer install --no-interaction
       - script:
-          name: echo php information
+          name: Run tests
           code: |
-            echo "php version $(php --version) running"
-            echo "from location $(which php)"
+            ./vendor/bin/phpunit
+
 deploy:
   steps:
     - lukevivier/gh-pages@0.2.1:

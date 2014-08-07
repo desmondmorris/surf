@@ -2,6 +2,8 @@
 
 namespace desmondmorris\surf;
 
+use Exception;
+
 use vierbergenlars\SemVer\version;
 
 class Site {
@@ -20,6 +22,10 @@ class Site {
   }
 
   public static function loadConfig($manifest = self::MANIFEST_FILE) {
+    if (!file_exists($manifest)) {
+      throw new Exception('Missing project manifest');
+    }
+
     $json = file_get_contents($manifest);
     return json_decode($json, TRUE);
   }
@@ -40,14 +46,12 @@ class Site {
   }
 
   public function bumpVersion($type = 'patch') {
-
     $config = $this->getConfig();
 
     $whitelist = array(
       'patch',
       'minor',
-      'major',
-      'build'
+      'major'
     );
 
     if (!in_array($type, $whitelist)){
@@ -60,7 +64,6 @@ class Site {
     $saved = self::saveConfig($config);
 
     $this->setConfig($saved);
-
   }
 
   public function getVersion() {
