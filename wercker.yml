@@ -8,7 +8,7 @@ build:
       - script:
           name: Run tests
           code: |
-            ./vendor/bin/phpunit --debug
+            ./scripts/test.sh
 
 deploy:
     steps:
