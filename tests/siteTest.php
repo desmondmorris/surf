@@ -7,6 +7,9 @@ class siteTest extends PHPUnit_Framework_TestCase
     protected static $config, $configJSON, $tmp_dir;
 
     public static function setUpBeforeClass() {
+
+      parent::setUpBeforeClass();
+      
       self::$config = array(
         'name' => 'test-site',
         'title' => 'Test Site',

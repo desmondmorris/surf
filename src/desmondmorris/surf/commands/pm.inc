@@ -7,29 +7,30 @@
 
 use desmondmorris\surf\Site;
 
-function _surf_pm_add($names) {
+function _surf_pm_add($names, $test = FALSE) {
 
   $config = Site::loadConfig();
 
-  if (empty($names)) {
-    return drush_set_error(
-      'DRUSH_SURF_PROJECT_ERROR',
-      'You must pass atleast one project.'
-    );
-  }
-
-  drush_include_engine('release_info', 'updatexml');
 
   $project_type = 'projects';
   if(!isset($config['projects'])){
     $config['projects'] = array();
   }
 
-  if (drush_get_option('dev')) {
-    $project_type = 'devProjects';
-    if(!isset($config['devProjects'])){
-      $config['devProjects'] = array();
+
+  if ($test === FALSE) {
+    drush_include_engine('release_info', 'updatexml');
+
+    if (drush_get_option('dev')) {
+      $project_type = 'devProjects';
+      if(!isset($config['devProjects'])){
+        $config['devProjects'] = array();
+      }
     }
+  }
+
+  if (empty($names)) {
+    throw new Exception('You must add atleast one project.');
   }
 
   foreach($names as $name) {
@@ -44,20 +45,25 @@ function _surf_pm_add($names) {
       'drupal_version' => $config['core']
     );
 
-    if (!$xml = updatexml_get_release_history_xml($project)) {
-      continue;
+    if ($test === FALSE) {
+      if (!$xml = updatexml_get_release_history_xml($project)) {
+        continue;
+      }
+      $info = updatexml_get_releases_from_xml($xml, $name);
+      $type = updatexml_determine_project_type($xml);
+      $project_version = $project_version ? $project_version : $info['recommended'];
+      drush_print('Adding '  . $info['title'] . ' (' . $name . '-' . $project_version . ')');
+    }
+    else {
+      $info['title'] = ucwords($name);
+      $type = 'module';
+      $project_version = $project_version ? $project_version : '1.0';
     }
 
-    $info = updatexml_get_releases_from_xml($xml, $name);
-    $type = updatexml_determine_project_type($xml);
 
-    $project_version = $project_version ? $project_version : $info['recommended'];
+    preg_match("/^([0-9]\.x\-)?([0-9a-zA-Z\-\.]*)/", $project_version, $matches);
 
-    drush_print('Adding '  . $info['title'] . ' (' . $name . '-' . $project_version . ')');
-
-    preg_match("/^[0-9]\.x\-([0-9a-zA-Z\-\.]*)/", $project_version, $matches);
-
-    $config[$project_type][$type][$name] = $matches[1];
+    $config[$project_type][$type][$name] = $matches[2];
 
     ksort($config[$project_type][$type]);
   }
