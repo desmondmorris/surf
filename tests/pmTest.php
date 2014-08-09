@@ -4,6 +4,8 @@ use desmondmorris\surf\Site;
 
 define('PROJECT_ROOT', dirname(dirname(__FILE__)));
 
+require_once PROJECT_ROOT . '/includes/utils.inc';
+
 class pmTest extends PHPUnit_Framework_TestCase
 {
 
@@ -38,7 +40,7 @@ class pmTest extends PHPUnit_Framework_TestCase
         'version' => '0.0.1',
         'core' => '7.x'
       );
-      self::$configJSON = json_encode(self::$config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+      self::$configJSON = jsonpp(self::$config);
       self::$tmp_dir = sys_get_temp_dir() . '/surf-tests-' . uniqid(time());
 
       mkdir(self::$tmp_dir);

@@ -31,7 +31,9 @@ class Site {
   }
 
   public static function saveConfig($config, $manifest = self::MANIFEST_FILE) {
-    $json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    //$json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+    $json = jsonpp($config);
     file_put_contents($manifest, $json);
 
     return $config;

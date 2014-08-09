@@ -5,10 +5,11 @@
  * Surf drupal project manager
  */
 
-require 'vendor/autoload.php';
-
+require_once 'vendor/autoload.php';
+require_once 'includes/utils.inc';
 use desmondmorris\surf\Site;
 use desmondmorris\surf\Make;
+
 
 define('SURF_PATH', dirname(__FILE__));
 define('SURF_SRC_PATH', SURF_PATH . '/src/desmondmorris/surf');
@@ -50,10 +51,11 @@ function surf_drush_command() {
     )
   );
 
-  $items['surf-commands'] = array(
+  $items['surf-install-commands'] = array(
     'description' => 'Installs drush commands.',
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'topics' => array('surf'),
+    'aliases' => array('sic'),
     'examples' => array(
       'drush surf-commands' => 'Installs drush commands.',
     )
@@ -202,7 +204,7 @@ function drush_surf_init() {
 
   $config['docroot'] = 'drupal';
 
-  drush_print(json_encode($config, JSON_PRETTY_PRINT));
+  drush_print(jsonpp($config));
 
   $confirm = drush_confirm("Is this correct?");
 
@@ -293,7 +295,7 @@ function drush_surf_init() {
   }
 
   // Install vendor drush commands
-  drush_surf_commands();
+  drush_surf_install_commands();
 
   drush_print('Success!  Happy Drupalling');
 
@@ -350,7 +352,7 @@ function drush_surf_sniff() {
 
 }
 
-function drush_surf_commands() {
+function drush_surf_install_commands() {
   $site = new Site();
   $config = $site->getConfig();
   $cwd = getcwd();
@@ -420,16 +422,3 @@ function drush_surf_link($copy = FALSE) {
   }
 
 }
-
-function rrmdir($dir) {
-   if (is_dir($dir)) {
-     $objects = scandir($dir);
-     foreach ($objects as $object) {
-       if ($object != "." && $object != "..") {
-         if (filetype($dir."/".$object) == "dir") rrmdir($dir."/".$object); else unlink($dir."/".$object);
-       }
-     }
-     reset($objects);
-     rmdir($dir);
-   }
- }

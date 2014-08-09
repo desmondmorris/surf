@@ -2,6 +2,8 @@
 
 use desmondmorris\surf\Site;
 
+require_once dirname(dirname(__FILE__)) . '/includes/utils.inc';
+
 class siteTest extends PHPUnit_Framework_TestCase
 {
     protected static $config, $configJSON, $tmp_dir;
@@ -9,14 +11,14 @@ class siteTest extends PHPUnit_Framework_TestCase
     public static function setUpBeforeClass() {
 
       parent::setUpBeforeClass();
-      
+
       self::$config = array(
         'name' => 'test-site',
         'title' => 'Test Site',
         'description' => 'A test site',
         'version' => '0.0.1'
       );
-      self::$configJSON = json_encode(self::$config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+      self::$configJSON = jsonpp(self::$config);
       self::$tmp_dir = sys_get_temp_dir() . '/surf-tests-' . uniqid(time());
 
       mkdir(self::$tmp_dir);
