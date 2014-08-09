@@ -11,7 +11,12 @@ TEMPLATE=$(cat <<EOF
 # SURF
 \$project_root = drush_get_option('root') ? drush_get_option('root') : getcwd();
 if (file_exists(\$project_root . '/surf.json')) {
-
+  \$option_keys = array('config', 'include', 'alias-path');
+  foreach(\$option_keys as \$option_key) {
+    if (isset(\$options[\$option_key]) && !is_array(\$options[\$option_key])) {
+      \$options[\$option_key] = array(\$options[\$option_key]);
+    }
+  }
   \$options['config'][] = \$project_root . '/config/drushrc.php';
   \$options['include'][] = \$project_root . '/lib/commands';
   \$options['include'][] = \$project_root . '/vendor/drush-commands';
