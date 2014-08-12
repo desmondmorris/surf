@@ -344,7 +344,7 @@ function drush_surf_init() {
     return;
   }
 
-  $templates_path = '/src/templates';
+  $templates_path = '/templates';
   $templates_dir = dirname(__FILE__) . $templates_path;
 
   $objects = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($templates_dir),
