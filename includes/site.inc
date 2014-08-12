@@ -10,7 +10,7 @@ use vierbergenlars\SemVer\version;
  * Returns project configuration manifest as an array.
  *
  * @param string $project_root
- *   Opitional project directory path
+ *   Optional project directory path
  *
  * @return array
  *   Configuration file as an associative array
@@ -29,7 +29,7 @@ function site_get_config($project_root = PROJECT_ROOT) {
  * @param array $config
  *   Configuration array to be saved as manifest
  * @param string $project_root
- *   Opitional project directory path
+ *   Optional project directory path
  */
 function site_save_config($config, $project_root = PROJECT_ROOT) {
   $json = jsonpp($config);
@@ -40,7 +40,7 @@ function site_save_config($config, $project_root = PROJECT_ROOT) {
  * Returns current project version from manifest.
  *
  * @param string $project_root
- *   Opitional project directory path
+ *   Optional project directory path
  */
 function site_get_version($project_root = PROJECT_ROOT) {
   $config = site_get_config($project_root);

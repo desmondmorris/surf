@@ -32,26 +32,25 @@ function surf_drush_command() {
     ),
     'options' => array(
       'name' => array(
-        'description' => 'Project name'
+        'description' => 'Project name',
       ),
       'title' => array(
-        'description' => 'Project title'
+        'description' => 'Project title',
       ),
       'description' => array(
-        'description' => 'Project description'
+        'description' => 'Project description',
       ),
       'type' => array(
-        'description' => 'Project type'
+        'description' => 'Project type',
       ),
       'version' => array(
-        'description' => 'Project version'
+        'description' => 'Project version',
       ),
       'core' => array(
-        'description' => 'Project core version'
+        'description' => 'Project core version',
       ),
     ),
   );
-
 
   $items['surf-link'] = array(
     'description' => 'Link custom projects and directories',
@@ -60,7 +59,7 @@ function surf_drush_command() {
     'topics' => array('surf'),
     'examples' => array(
       'drush surf-link' => 'Link custom projects and directories',
-    )
+    ),
   );
 
   $items['surf-install-commands'] = array(
@@ -70,7 +69,7 @@ function surf_drush_command() {
     'aliases' => array('sic'),
     'examples' => array(
       'drush surf-commands' => 'Installs drush commands.',
-    )
+    ),
   );
 
   $items['surf-pm-list'] = array(
@@ -84,8 +83,8 @@ function surf_drush_command() {
     'aliases' => array('spml'),
     'options' => array(
       'no-dev' => array(
-        'descriptions' => 'Lists all projects except dev.'
-      )
+        'descriptions' => 'Lists all projects except dev.',
+      ),
     ),
   );
 
@@ -97,7 +96,7 @@ function surf_drush_command() {
       'drush surf-desmond' => 'Build site from project config.',
     ),
     'options' => array(
-      'dev' => 'Include dev projects'
+      'dev' => 'Include dev projects',
     ),
   );
 
@@ -114,7 +113,7 @@ function surf_drush_command() {
     ),
     'aliases' => array('spma'),
     'options' => array(
-      'dev' => 'Development only projects'
+      'dev' => 'Development only projects',
     ),
   );
 
@@ -142,19 +141,25 @@ function surf_drush_command() {
     'topics' => array('surf'),
     'examples' => array(
       'drush surf-sniff' => 'Run code sniffer against our custom code.',
-    )
+    ),
   );
 
   return $items;
 }
 
 /**
- *
+ * List all projects in the manifest.
  */
 function drush_surf_pm_list() {
   _surf_pm_list();
 }
 
+/**
+ * Helper function that lists all projects in the manifest.
+ *
+ * @param string $project_root
+ *   Optional project directory path
+ */
 function _surf_pm_list($project_root = PROJECT_ROOT) {
   $config = site_get_config($project_root);
 
@@ -162,14 +167,14 @@ function _surf_pm_list($project_root = PROJECT_ROOT) {
 
   $project_types = array('projects', 'devProjects');
 
-  foreach($project_types as $project_type) {
+  foreach ($project_types as $project_type) {
 
     if (($project_type == 'devProjects') && ($no_dev)) {
       break;
     }
 
     if (isset($config[$project_type])) {
-      foreach($config[$project_type] as $type => $projects) {
+      foreach ($config[$project_type] as $type => $projects) {
 
         $group = $type . 's';
 
@@ -178,7 +183,7 @@ function _surf_pm_list($project_root = PROJECT_ROOT) {
         }
 
         drush_print(ucwords($group) . ':');
-        foreach($projects as $name => $version) {
+        foreach ($projects as $name => $version) {
           drush_print($name . '-' . $version);
         }
 
@@ -188,21 +193,30 @@ function _surf_pm_list($project_root = PROJECT_ROOT) {
   }
 }
 
-
 /**
- *
+ * Add new projects to the manifest.
  */
 function drush_surf_pm_add() {
   $names = func_get_args();
   _surf_pm_add($names);
 }
 
+/**
+ * Helper function that adds new projects to the manifest.
+ *
+ * @param array $names
+ *   Project names
+ * @param string $project_root
+ *   Optional project directory path
+ * @param bool $test
+ *   Boolean value to prevent calls to the drupal update server during testing
+ */
 function _surf_pm_add($names, $project_root = PROJECT_ROOT, $test = FALSE) {
 
   $config = site_get_config($project_root);
 
   $project_type = 'projects';
-  if(!isset($config['projects'])){
+  if (!isset($config['projects'])) {
     $config['projects'] = array();
   }
 
@@ -211,7 +225,7 @@ function _surf_pm_add($names, $project_root = PROJECT_ROOT, $test = FALSE) {
 
     if (drush_get_option('dev')) {
       $project_type = 'devProjects';
-      if(!isset($config['devProjects'])){
+      if (!isset($config['devProjects'])) {
         $config['devProjects'] = array();
       }
     }
@@ -221,16 +235,16 @@ function _surf_pm_add($names, $project_root = PROJECT_ROOT, $test = FALSE) {
     throw new Exception('You must add atleast one project.');
   }
 
-  foreach($names as $name) {
+  foreach ($names as $name) {
 
     preg_match("/([a-z_-]*)(@(.*))?$/", $name, $matches);
 
-    $project_version = isset($matches[3]) ? $matches[3] : null;
+    $project_version = isset($matches[3]) ? $matches[3] : NULL;
     $name = $matches[1];
 
     $project = array(
       'name' => $name,
-      'drupal_version' => $config['core']
+      'drupal_version' => $config['core'],
     );
 
     if ($test === FALSE) {
@@ -248,7 +262,6 @@ function _surf_pm_add($names, $project_root = PROJECT_ROOT, $test = FALSE) {
       $project_version = $project_version ? $project_version : '1.0';
     }
 
-
     preg_match("/^([0-9]\.x\-)?([0-9a-zA-Z\-\.]*)/", $project_version, $matches);
 
     $config[$project_type][$type][$name] = $matches[2];
@@ -260,6 +273,9 @@ function _surf_pm_add($names, $project_root = PROJECT_ROOT, $test = FALSE) {
   site_save_config($config, $project_root);
 }
 
+/**
+ * Builds a functional drupal site from manifest.
+ */
 function drush_surf_build() {
 
   $options = array();
@@ -272,13 +288,22 @@ function drush_surf_build() {
 
 }
 
+/**
+ * Helper function that builds a functional drupal site from manifest.
+ *
+ * @param array $options
+ *   Pass project type options
+ * @param string $project_root
+ *   Optional project directory path
+ */
 function _surf_build($options = array(), $project_root = PROJECT_ROOT) {
   $config = site_get_config($project_root);
 
   if (isset($config['docroot'])  && file_exists($project_root . '/' . $config['docroot'])) {
-    if( !drush_confirm($config['docroot'] . " exists.  Overwrite?") ) {
+    if (!drush_confirm($config['docroot'] . " exists.  Overwrite?")) {
       return;
-    }else {
+    }
+    else {
       rrmdir($config['docroot']);
     }
   }
@@ -291,18 +316,17 @@ function _surf_build($options = array(), $project_root = PROJECT_ROOT) {
     'make',
     array(
       $file,
-      $config['docroot']
+      $config['docroot'],
     )
   );
 }
 
 /**
- *
+ * Initiates new surf manifest and scaffold.
  */
 function drush_surf_init() {
 
   $config = array();
-
 
   $config['name'] = drush_get_option('name') ? drush_get_option('name') : drush_prompt(
     'Machine-name',
@@ -350,64 +374,64 @@ function drush_surf_init() {
   $objects = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($templates_dir),
   RecursiveIteratorIterator::SELF_FIRST);
 
-  foreach($objects as $name => $object){
+  foreach ($objects as $name => $object) {
 
-      $fileName = $object->getFileName();
-      $pathName = $object->getPathName();
-      $relative_path = str_replace($templates_dir, '', $pathName);
+    $filename = $object->getFileName();
+    $pathname = $object->getPathName();
+    $relative_path = str_replace($templates_dir, '', $pathname);
 
-      if(in_array($fileName, array('.', '..'))) {
-        continue;
-      }
+    if (in_array($filename, array('.', '..'))) {
+      continue;
+    }
 
-      if (is_dir($pathName)) {
-        exec('mkdir -p .' . $relative_path);
-      }
-      else {
+    if (is_dir($pathname)) {
+      exec('mkdir -p .' . $relative_path);
+    }
+    else {
 
-        preg_match_all('/PROJECT([A-Z]*)/', $fileName, $matches, PREG_SET_ORDER);
+      preg_match_all('/PROJECT([A-Z]*)/', $filename, $matches, PREG_SET_ORDER);
 
-        if (!empty($matches)) {
+      if (!empty($matches)) {
 
-          foreach ($matches as $match){
-            if (isset($config[strtolower($match[1])])) {
-              $fileName = str_replace($matches[0], $vars[strtolower($match[1])], $fileName);
-              $relative_path = str_replace($matches[0], $vars[strtolower($match[1])], $relative_path);
-            }
+        foreach ($matches as $match) {
+          if (isset($config[strtolower($match[1])])) {
+            $filename = str_replace($matches[0], $vars[strtolower($match[1])], $filename);
+            $relative_path = str_replace($matches[0], $vars[strtolower($match[1])], $relative_path);
           }
         }
+      }
 
-        if (substr($fileName, -8) == '.tpl.php') {
-           extract($config);
-           ob_start();
-           include($pathName);
-           $data = ob_get_contents();
-           ob_end_clean();
+      if (substr($filename, -8) == '.tpl.php') {
+        extract($config);
+        ob_start();
+        include $pathname;
+        $data = ob_get_contents();
+        ob_end_clean();
 
-           $filename = str_replace('.tpl.php', '', '.' . $relative_path);
+        $filename = str_replace('.tpl.php', '', '.' . $relative_path);
 
-           if (file_exists($filename)) {
-             if(drush_confirm("Overwrite " . $filename . "?")) {
-               file_put_contents($filename, $data);
-             }
-           }
-           else {
-             file_put_contents($filename, $data);
-           }
-
+        if (file_exists($filename)) {
+          if (drush_confirm("Overwrite " . $filename . "?")) {
+            file_put_contents($filename, $data);
+          }
         }
         else {
-          if (file_exists('./' . $relative_path)) {
-            if(drush_confirm("Overwrite ." . $relative_path . "?")) {
-              exec('cp ' . $pathName . ' .' . $relative_path);
-            }
-          }
-          else {
-            exec('cp ' . $pathName . ' .' . $relative_path);
-          }
-
+          file_put_contents($filename, $data);
         }
+
       }
+      else {
+        if (file_exists('./' . $relative_path)) {
+          if (drush_confirm("Overwrite ." . $relative_path . "?")) {
+            exec('cp ' . $pathname . ' .' . $relative_path);
+          }
+        }
+        else {
+          exec('cp ' . $pathname . ' .' . $relative_path);
+        }
+
+      }
+    }
   }
 
   if (!file_exists('.git')) {
@@ -415,17 +439,10 @@ function drush_surf_init() {
 
     if ($git) {
       exec('git init');
-
-      // $githooks = drush_confirm("Add githooks?");
-      //
-      // if ($githooks) {
-      //   exec("cp " . SURF_SRC_PATH . "/scripts/pre-commit .git/hooks");
-      // }
-
     }
   }
 
-  // Install vendor drush commands
+  // Install vendor drush commands.
   drush_surf_install_commands();
 
   drush_print('Success!  Happy Drupalling');
@@ -433,7 +450,7 @@ function drush_surf_init() {
 }
 
 /**
- *
+ * Prints project version or increments version.
  */
 function drush_surf_project_version() {
 
@@ -450,7 +467,7 @@ function drush_surf_project_version() {
 }
 
 /**
- *
+ * Lint checks custom project code.
  */
 function drush_surf_sniff() {
   $config = site_get_config();
@@ -466,7 +483,7 @@ function drush_surf_sniff() {
     VENDOR_PATH . '/bin/phpcs',
     '--standard=' . VENDOR_PATH . '/drupal/coder/coder_sniffer/Drupal',
     $directories,
-    '--ignore=*.js,*.css'
+    '--ignore=*.js,*.css',
   );
 
   $command = implode(' ', $command);
@@ -480,6 +497,9 @@ function drush_surf_sniff() {
 
 }
 
+/**
+ * Installs vendor drush commands.
+ */
 function drush_surf_install_commands() {
   $config = site_get_config();
   $cwd = getcwd();
@@ -500,11 +520,15 @@ function drush_surf_install_commands() {
   }
 }
 
+/**
+ * Symlinks or copies project directories into the docroot.
+ */
 function drush_surf_link() {
 
   try {
     _surf_link();
-  } catch (Exception $e) {
+  }
+  catch (Exception $e) {
 
     if ($e->getMessage() == 'Docroot not found.') {
       return drush_set_error(
@@ -516,6 +540,14 @@ function drush_surf_link() {
   }
 }
 
+/**
+ * Helper function for linking and copying project directories into the docroot.
+ *
+ * @param bool $copy
+ *   Decides whether or not to symlink or copy
+ * @param string $project_root
+ *   Optional project directory path
+ */
 function _surf_link($copy = FALSE, $project_root = PROJECT_ROOT) {
 
   $config = site_get_config($project_root);
@@ -530,7 +562,7 @@ function _surf_link($copy = FALSE, $project_root = PROJECT_ROOT) {
   $directories = isset($config['directories']) ? $config['directories'] : array();
   $linked = isset($config['linked']) ? $config['linked'] : array();
 
-  foreach($linked as $src => $dest) {
+  foreach ($linked as $src => $dest) {
 
     if (isset($directories[$src])) {
       $src_path = $cwd . "/" . $directories[$src];
