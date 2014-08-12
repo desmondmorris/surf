@@ -6,6 +6,15 @@ build:
           code: composer install --no-interaction
       - desmondmorris/drush@0.0.2
       - script:
+          name: Install surf
+          code: |
+            sudo mkdir ~/.drush
+            sudo chown ubuntu ~/.drush
+            mkdir ~/.drush/surf
+            cp -rf * ~/.drush/surf
+            ls ~/.drush
+            drush cc drush
+      - script:
           name: Run tests
           code: |
             ./scripts/test.sh
