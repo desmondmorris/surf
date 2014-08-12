@@ -15,9 +15,13 @@ build:
             ls ~/.drush
             drush cc drush
       - script:
-          name: Run tests
+          name: Simple Tests
           code: |
             ./scripts/test.sh
+      - script:
+          name: Lint
+          code: |
+            ./scripts/lint.sh
 
 deploy:
     steps:
