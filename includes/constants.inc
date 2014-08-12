@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Constant variables definitions
+ */
 
 define('PROJECT_ROOT', getcwd());
 define('VENDOR_PATH', PROJECT_ROOT . '/vendor');
