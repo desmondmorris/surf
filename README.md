@@ -10,6 +10,9 @@ Surf is an experimental package management system for Drupal projects built on t
 
 ### Requirements
 
+* PHP >= 5.3
+* Drush >= 5 
+
 ### Installation
 
 *Quick Install*
