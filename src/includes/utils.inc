@@ -49,5 +49,30 @@ function jsonpp($json, $istr='  ') {
       strchr('}]', $json[$p+1]) || $result .= "\n".str_repeat($istr, $i);
     }
   }
-  return $result;
+  return str_replace('\\/', '/', $result);
+}
+
+/**
+* recurse_copy - Recusive copy
+*
+*
+* @param string $src  Source directory to copy
+* @param string $dst  Destination directory
+*
+* @return string
+*/
+function recurse_copy($src,$dst) {
+  $dir = opendir($src);
+  @mkdir($dst);
+  while(false !== ( $file = readdir($dir)) ) {
+    if (( $file != '.' ) && ( $file != '..' )) {
+      if ( is_dir($src . '/' . $file) ) {
+        recurse_copy($src . '/' . $file,$dst . '/' . $file);
+      }
+      else {
+        copy($src . '/' . $file,$dst . '/' . $file);
+      }
+    }
+  }
+  closedir($dir);
 }

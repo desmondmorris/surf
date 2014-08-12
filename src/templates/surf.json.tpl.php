@@ -14,13 +14,11 @@
         "libraries": "lib/libraries",
         "modules": "lib/modules",
         "profiles": "lib/profiles",
+        "shell-aliases": "lib/shell-aliases",
         "themes": "lib/themes"
     },
     "linked": {
       "modules": "sites/all/modules/custom",
       "themes": "sites/all/themes"
-    },
-    "commands": {
-      "drush-casperjs": "git@bitbucket.org:davereid/drush-casperjs.git"
     }
 }

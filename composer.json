@@ -22,8 +22,8 @@
         "drush/drush":">=6.1.0"
     },
     "autoload": {
-        "psr-0": {
-            "desmondmorris\\surf\\":"src/"
-        }
+      "files": [
+        "src/bootstrap.php"
+      ]
     }
 }

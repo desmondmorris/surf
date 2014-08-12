@@ -6,14 +6,6 @@
  */
 
 require_once 'vendor/autoload.php';
-require_once 'includes/utils.inc';
-use desmondmorris\surf\Site;
-use desmondmorris\surf\Make;
-
-
-define('SURF_PATH', dirname(__FILE__));
-define('SURF_SRC_PATH', SURF_PATH . '/src/desmondmorris/surf');
-define('VENDOR_PATH', SURF_PATH . '/vendor');
 
 /**
  * Implements hook_drush_command().
@@ -37,7 +29,27 @@ function surf_drush_command() {
     'topics' => array('surf'),
     'examples' => array(
       'drush surf-init' => 'Creates new surf project.',
-    )
+    ),
+    'options' => array(
+      'name' => array(
+        'description' => 'Project name'
+      ),
+      'title' => array(
+        'description' => 'Project title'
+      ),
+      'description' => array(
+        'description' => 'Project description'
+      ),
+      'type' => array(
+        'description' => 'Project type'
+      ),
+      'version' => array(
+        'description' => 'Project version'
+      ),
+      'core' => array(
+        'description' => 'Project core version'
+      ),
+    ),
   );
 
 
@@ -140,8 +152,40 @@ function surf_drush_command() {
  *
  */
 function drush_surf_pm_list() {
-  require_once(SURF_SRC_PATH . '/commands/pm.inc');
   _surf_pm_list();
+}
+
+function _surf_pm_list($project_root = PROJECT_ROOT) {
+  $config = site_get_config($project_root);
+
+  $no_dev = drush_get_option('no-dev');
+
+  $project_types = array('projects', 'devProjects');
+
+  foreach($project_types as $project_type) {
+
+    if (($project_type == 'devProjects') && ($no_dev)) {
+      break;
+    }
+
+    if (isset($config[$project_type])) {
+      foreach($config[$project_type] as $type => $projects) {
+
+        $group = $type . 's';
+
+        if ($project_type == 'devProjects') {
+          $group = 'Development ' . $group;
+        }
+
+        drush_print(ucwords($group) . ':');
+        foreach($projects as $name => $version) {
+          drush_print($name . '-' . $version);
+        }
+
+      }
+    }
+
+  }
 }
 
 
@@ -149,20 +193,107 @@ function drush_surf_pm_list() {
  *
  */
 function drush_surf_pm_add() {
-  require_once(SURF_SRC_PATH . '/commands/pm.inc');
   $names = func_get_args();
   _surf_pm_add($names);
 }
 
+function _surf_pm_add($names, $project_root = PROJECT_ROOT, $test = FALSE) {
+
+  $config = site_get_config($project_root);
+
+  $project_type = 'projects';
+  if(!isset($config['projects'])){
+    $config['projects'] = array();
+  }
+
+  if ($test === FALSE) {
+    drush_include_engine('release_info', 'updatexml');
+
+    if (drush_get_option('dev')) {
+      $project_type = 'devProjects';
+      if(!isset($config['devProjects'])){
+        $config['devProjects'] = array();
+      }
+    }
+  }
+
+  if (empty($names)) {
+    throw new Exception('You must add atleast one project.');
+  }
+
+  foreach($names as $name) {
+
+    preg_match("/([a-z_-]*)(@(.*))?$/", $name, $matches);
+
+    $project_version = isset($matches[3]) ? $matches[3] : null;
+    $name = $matches[1];
+
+    $project = array(
+      'name' => $name,
+      'drupal_version' => $config['core']
+    );
+
+    if ($test === FALSE) {
+      if (!$xml = updatexml_get_release_history_xml($project)) {
+        continue;
+      }
+      $info = updatexml_get_releases_from_xml($xml, $name);
+      $type = updatexml_determine_project_type($xml);
+      $project_version = $project_version ? $project_version : $info['recommended'];
+      drush_print('Adding '  . $info['title'] . ' (' . $name . '-' . $project_version . ')');
+    }
+    else {
+      $info['title'] = ucwords($name);
+      $type = 'module';
+      $project_version = $project_version ? $project_version : '1.0';
+    }
+
+
+    preg_match("/^([0-9]\.x\-)?([0-9a-zA-Z\-\.]*)/", $project_version, $matches);
+
+    $config[$project_type][$type][$name] = $matches[2];
+
+    ksort($config[$project_type][$type]);
+  }
+  ksort($config[$project_type]);
+
+  site_save_config($config, $project_root);
+}
+
 function drush_surf_build() {
+
+  $options = array();
 
   if (drush_get_option('dev')) {
     $options['dev'] = TRUE;
   }
 
-  $make = new Make(new Site(), $options);
-  $make->build();
+  _surf_build($options);
 
+}
+
+function _surf_build($options = array(), $project_root = PROJECT_ROOT) {
+  $config = site_get_config($project_root);
+
+  if (isset($config['docroot'])  && file_exists($project_root . '/' . $config['docroot'])) {
+    if( !drush_confirm($config['docroot'] . " exists.  Overwrite?") ) {
+      return;
+    }else {
+      rrmdir($config['docroot']);
+    }
+  }
+
+  $make = site_generate_make(FALSE, $config);
+  $file = sys_get_temp_dir() . '/' . $config['name'] . '-' . uniqid(time()) . '.make';
+  file_put_contents($file, $make);
+
+  drush_invoke(
+    'make',
+    array(
+      $file,
+      $config['docroot']
+    )
+  );
 }
 
 /**
@@ -172,37 +303,38 @@ function drush_surf_init() {
 
   $config = array();
 
-  $config['name'] = drush_prompt(
+
+  $config['name'] = drush_get_option('name') ? drush_get_option('name') : drush_prompt(
     'Machine-name',
     basename(getcwd())
   );
 
-  $config['title'] = drush_prompt(
+  $config['title'] = drush_get_option('title') ? drush_get_option('title') : drush_prompt(
     'Title',
     'My Drupal Project'
   );
 
-  $config['description'] = drush_prompt(
+  $config['description'] = drush_get_option('description') ? drush_get_option('description') : drush_prompt(
     'Description',
     'My cool new Drupal project'
   );
 
-  $config['type'] = drush_prompt(
+  $config['type'] = drush_get_option('type') ? drush_get_option('type') : drush_prompt(
     'Project type (website, profile)',
     'website'
   );
 
-  $config['version'] = drush_prompt(
+  $config['version'] = drush_get_option('version') ? drush_get_option('version') : drush_prompt(
     'Project version',
     '0.0.1'
   );
 
-  $config['core'] = drush_prompt(
+  $config['core'] = drush_get_option('core') ? drush_get_option('core') : drush_prompt(
     'Drupal Core version',
-    '7.x'
+    DEFAULT_CORE_VERSION
   );
 
-  $config['docroot'] = 'drupal';
+  $config['docroot'] = DEFAULT_DOCROOT;
 
   drush_print(jsonpp($config));
 
@@ -212,8 +344,8 @@ function drush_surf_init() {
     return;
   }
 
-  $templates_path = '/lib/templates';
-  $templates_dir = SURF_PATH . $templates_path;
+  $templates_path = '/src/templates';
+  $templates_dir = dirname(__FILE__) . $templates_path;
 
   $objects = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($templates_dir),
   RecursiveIteratorIterator::SELF_FIRST);
@@ -271,7 +403,6 @@ function drush_surf_init() {
             }
           }
           else {
-            print_r('jopjpojopjojopjpojopjpo');
             exec('cp ' . $pathName . ' .' . $relative_path);
           }
 
@@ -306,17 +437,15 @@ function drush_surf_init() {
  */
 function drush_surf_project_version() {
 
-  $site = new Site();
-
   $bump = drush_get_option('bump');
 
   if ($bump) {
     if ($bump === TRUE) {
       $bump = 'patch';
     }
-    $site->bumpVersion($bump);
+    site_bump_version($bump);
   }
-  drush_print($site->getVersion());
+  drush_print(site_get_version());
 
 }
 
@@ -324,8 +453,7 @@ function drush_surf_project_version() {
  *
  */
 function drush_surf_sniff() {
-  $site = new Site();
-  $config = $site->getConfig();
+  $config = site_get_config();
 
   if (empty($config['directories'])) {
     drush_print('You have not set up any directories in your config file');
@@ -353,8 +481,7 @@ function drush_surf_sniff() {
 }
 
 function drush_surf_install_commands() {
-  $site = new Site();
-  $config = $site->getConfig();
+  $config = site_get_config();
   $cwd = getcwd();
 
   if (!isset($config['commands'])) {
@@ -370,29 +497,38 @@ function drush_surf_install_commands() {
     if (file_exists("./" . $vendor_path . "/composer.json")) {
       exec("cd " . $vendor_path . " && composer update --no-dev && cd " . $cwd);
     }
-
   }
-
 }
 
-function drush_surf_link($copy = FALSE) {
-  $site = new Site();
-  $config = $site->getConfig();
+function drush_surf_link() {
+
+  try {
+    _surf_link();
+  } catch (Exception $e) {
+
+    if ($e->getMessage() == 'Docroot not found.') {
+      return drush_set_error(
+        'DRUSH_SURF_PROJECT_ERROR',
+        'Docroot not found.'
+      );
+    }
+
+  }
+}
+
+function _surf_link($copy = FALSE, $project_root = PROJECT_ROOT) {
+
+  $config = site_get_config($project_root);
   $cwd = getcwd();
 
-  $docroot = isset($config['docroot']) ? $config['docroot'] : 'docroot';
+  $docroot = isset($config['docroot']) ? $config['docroot'] : DEFAULT_DOCROOT;
 
   if (!file_exists($cwd . "/" . $docroot)) {
-    return drush_set_error(
-      'DRUSH_SURF_PROJECT_ERROR',
-      'Docroot not found.'
-    );
+    throw new Exception('Docroot not found.');
   }
 
   $directories = isset($config['directories']) ? $config['directories'] : array();
   $linked = isset($config['linked']) ? $config['linked'] : array();
-
-
 
   foreach($linked as $src => $dest) {
 
@@ -410,15 +546,11 @@ function drush_surf_link($copy = FALSE) {
       }
 
       if ($copy === TRUE) {
-        drush_print("Copying " . $src);
-        copy($src_path, $dest_path);
+        recurse_copy($src_path, $dest_path);
       }
       else {
-        drush_print("Linking " . $src);
         symlink($src_path, $dest_path);
       }
     }
-
   }
-
 }
