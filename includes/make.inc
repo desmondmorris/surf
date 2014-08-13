@@ -25,6 +25,13 @@ function make_generate_makefile_contents($projects = array(), $core = DEFAULT_CO
   $header['core'] = $core;
   $header['api'] = $api_version;
 
+  if (!isset($projects['drupal'])) {
+    $projects['drupal'] = array(
+      'type' => 'core',
+      '_type' => 'core'
+    );
+  }
+
   $output = '';
 
   $output .= make_generate_makefile_body($projects, $header);
