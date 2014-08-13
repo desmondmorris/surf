@@ -111,15 +111,6 @@ class SurfTest extends PHPUnit_Framework_TestCase {
   }
 
   /**
-   * Tests link behavior if a project manifest is not present.
-   *
-   * @expectedException Exception.
-   */
-  public function testLinkProjectsPreBuild() {
-    _surf_link(FALSE, $this->tmpDir);
-  }
-
-  /**
    * Tests linking and copying project directories.
    */
   public function testLinkProjects() {
