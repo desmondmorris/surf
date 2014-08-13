@@ -28,7 +28,7 @@ function make_generate_makefile_contents($projects = array(), $core = DEFAULT_CO
   if (!isset($projects['drupal'])) {
     $projects['drupal'] = array(
       'type' => 'core',
-      '_type' => 'core'
+      '_type' => 'core',
     );
   }
 

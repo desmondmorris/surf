@@ -264,7 +264,12 @@ function _surf_pm_add($names, $project_root = PROJECT_ROOT, $test = FALSE) {
 
     preg_match('/^([0-9]\.x\-)?([0-9a-zA-Z\-\.]*)/', $project_version, $matches);
 
-    $config[$project_type][$type][$name] = $matches[2];
+    if ($matches[2] == 'dev') {
+      $config[$project_type][$type][$name] = $matches[1] . $matches[2];
+    }
+    else {
+      $config[$project_type][$type][$name] = $matches[2];
+    }
 
     ksort($config[$project_type][$type]);
   }
