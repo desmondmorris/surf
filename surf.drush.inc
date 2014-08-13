@@ -237,7 +237,7 @@ function _surf_pm_add($names, $project_root = PROJECT_ROOT, $test = FALSE) {
 
   foreach ($names as $name) {
 
-    preg_match("/([a-z_-]*)(@(.*))?$/", $name, $matches);
+    preg_match('/([a-z_-]*)(@(.*))?$/', $name, $matches);
 
     $project_version = isset($matches[3]) ? $matches[3] : NULL;
     $name = $matches[1];
@@ -262,7 +262,7 @@ function _surf_pm_add($names, $project_root = PROJECT_ROOT, $test = FALSE) {
       $project_version = $project_version ? $project_version : '1.0';
     }
 
-    preg_match("/^([0-9]\.x\-)?([0-9a-zA-Z\-\.]*)/", $project_version, $matches);
+    preg_match('/^([0-9]\.x\-)?([0-9a-zA-Z\-\.]*)/', $project_version, $matches);
 
     $config[$project_type][$type][$name] = $matches[2];
 
@@ -300,7 +300,7 @@ function _surf_build($options = array(), $project_root = PROJECT_ROOT) {
   $config = site_get_config($project_root);
 
   if (isset($config['docroot'])  && file_exists($project_root . '/' . $config['docroot'])) {
-    if (!drush_confirm($config['docroot'] . " exists.  Overwrite?")) {
+    if (!drush_confirm($config['docroot'] . ' exists.  Overwrite?')) {
       return;
     }
     else {
@@ -362,7 +362,7 @@ function drush_surf_init() {
 
   drush_print(jsonpp($config));
 
-  $confirm = drush_confirm("Is this correct?");
+  $confirm = drush_confirm('Is this correct?');
 
   if (!$confirm) {
     return;
@@ -411,7 +411,7 @@ function drush_surf_init() {
         $filename = str_replace('.tpl.php', '', '.' . $relative_path);
 
         if (file_exists($filename)) {
-          if (drush_confirm("Overwrite " . $filename . "?")) {
+          if (drush_confirm('Overwrite ' . $filename . '?')) {
             file_put_contents($filename, $data);
           }
         }
@@ -422,7 +422,7 @@ function drush_surf_init() {
       }
       else {
         if (file_exists('./' . $relative_path)) {
-          if (drush_confirm("Overwrite ." . $relative_path . "?")) {
+          if (drush_confirm('Overwrite .' . $relative_path . '?')) {
             exec('cp ' . $pathname . ' .' . $relative_path);
           }
         }
@@ -435,7 +435,7 @@ function drush_surf_init() {
   }
 
   if (!file_exists('.git')) {
-    $git = drush_confirm("Initialize git?");
+    $git = drush_confirm('Initialize git?');
 
     if ($git) {
       exec('git init');
@@ -477,7 +477,7 @@ function drush_surf_sniff() {
     return;
   }
 
-  $directories = implode(" ", (array) $config['directories']);
+  $directories = implode(' ', (array) $config['directories']);
 
   $command = array(
     VENDOR_PATH . '/bin/phpcs',
@@ -490,7 +490,7 @@ function drush_surf_sniff() {
   exec($command, $output);
 
   if (!empty($output)) {
-    $results = implode("\n", $output);
+    $results = implode('\n', $output);
     drush_print($results);
     return $results;
   }
@@ -510,12 +510,12 @@ function drush_surf_install_commands() {
 
   foreach ($config['commands'] as $command => $url) {
 
-    $vendor_path = "vendor/drush-commands/" . $command;
+    $vendor_path = 'vendor/drush-commands/' . $command;
     rrmdir($vendor_path);
-    exec("git clone " . $url . " " . $vendor_path);
+    exec('git clone ' . $url . ' ' . $vendor_path);
 
-    if (file_exists("./" . $vendor_path . "/composer.json")) {
-      exec("cd " . $vendor_path . " && composer update --no-dev && cd " . $cwd);
+    if (file_exists('./' . $vendor_path . '/composer.json')) {
+      exec('cd ' . $vendor_path . ' && composer update --no-dev && cd ' . $cwd);
     }
   }
 }
@@ -555,7 +555,7 @@ function _surf_link($copy = FALSE, $project_root = PROJECT_ROOT) {
 
   $docroot = isset($config['docroot']) ? $config['docroot'] : DEFAULT_DOCROOT;
 
-  if (!file_exists($cwd . "/" . $docroot)) {
+  if (!file_exists($cwd . '/' . $docroot)) {
     throw new Exception('Docroot not found.');
   }
 
@@ -565,8 +565,8 @@ function _surf_link($copy = FALSE, $project_root = PROJECT_ROOT) {
   foreach ($linked as $src => $dest) {
 
     if (isset($directories[$src])) {
-      $src_path = $cwd . "/" . $directories[$src];
-      $dest_path = $cwd . "/" . $docroot . "/" . $dest;
+      $src_path = $cwd . '/' . $directories[$src];
+      $dest_path = $cwd . '/' . $docroot . '/' . $dest;
 
       if (file_exists($dest_path)) {
         if (is_dir($dest_path) && !is_link($dest_path)) {
