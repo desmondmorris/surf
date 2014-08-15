@@ -304,6 +304,11 @@ function drush_surf_build() {
 function _surf_build($options = array(), $project_root = PROJECT_ROOT) {
   $config = site_get_config($project_root);
 
+  if (file_exists(PROJECT_ROOT . '/scripts/pre-build.sh')) {
+    drush_print('Running pre build script');
+    shell_exec(PROJECT_ROOT . '/scripts/pre-build.sh');
+  }
+
   if (isset($config['docroot'])  && file_exists($project_root . '/' . $config['docroot'])) {
     if (!drush_confirm($config['docroot'] . ' exists.  Overwrite?')) {
       return;
@@ -311,11 +316,6 @@ function _surf_build($options = array(), $project_root = PROJECT_ROOT) {
     else {
       rrmdir($config['docroot']);
     }
-  }
-
-  if (file_exists(PROJECT_ROOT . '/scripts/pre-build.sh')) {
-    drush_print('Running pre build script');
-    shell_exec(PROJECT_ROOT . '/scripts/pre-build.sh');
   }
 
   $make = site_generate_make(FALSE, $config);
