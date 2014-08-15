@@ -313,6 +313,11 @@ function _surf_build($options = array(), $project_root = PROJECT_ROOT) {
     }
   }
 
+  if (file_exists(PROJECT_ROOT . '/scripts/pre-build.sh')) {
+    drush_print('Running pre build script');
+    shell_exec(PROJECT_ROOT . '/scripts/pre-build.sh');
+  }
+
   $make = site_generate_make(FALSE, $config);
   $file = sys_get_temp_dir() . '/' . $config['name'] . '-' . uniqid(time()) . '.make';
   file_put_contents($file, $make);
@@ -324,6 +329,12 @@ function _surf_build($options = array(), $project_root = PROJECT_ROOT) {
       $config['docroot'],
     )
   );
+
+  if (file_exists(PROJECT_ROOT . '/scripts/post-build.sh')) {
+    drush_print('Running post build script');
+    shell_exec(PROJECT_ROOT . '/scripts/post-build.sh');
+  }
+
 }
 
 /**
