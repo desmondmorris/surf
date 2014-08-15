@@ -77,7 +77,7 @@ function make_generate_makefile_body($projects, $output = array()) {
       foreach ($project['download'] as $key => $pair) {
 
         if (in_array($key, $download_whitelist)) {
-          $output[$base . '[download][$key]'] = $pair;
+          $output[$base . '[download][' . $key . ']'] = $pair;
         }
 
       }
