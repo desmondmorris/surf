@@ -7,7 +7,9 @@ rm -rf $HOME/.drush/surf
 
 composer_bin=$(which composer)
 
-$composer_bin create-project desmondmorris/surf $HOME/.drush/surf -s dev --no-dev -n
+if [ ! -f $HOME/.drush/surf/composer.json ]; then
+  $composer_bin create-project desmondmorris/surf $HOME/.drush/surf -s dev --no-dev -n
+fi
 
 TEMPLATE=$(cat <<EOF
 # SURF
