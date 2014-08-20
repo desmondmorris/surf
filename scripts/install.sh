@@ -5,7 +5,9 @@ command -v drush >/dev/null 2>&1 || { echo >&2 "Please install drush"; exit 1; }
 
 rm -rf $HOME/.drush/surf
 
-/usr/local/bin/composer create-project desmondmorris/surf $HOME/.drush/surf -s dev --no-dev -n
+composer_bin=$(which composer)
+
+$composer_bin create-project desmondmorris/surf $HOME/.drush/surf -s dev --no-dev -n
 
 TEMPLATE=$(cat <<EOF
 # SURF
